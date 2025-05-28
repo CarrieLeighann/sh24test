@@ -1,29 +1,38 @@
-import React from "react";
+import React, { useState } from "react";
+
+const allowedLSOAPrefix = ['Southwark', 'Lambeth'];
+const exceptionPostcodes = ['SH24 1AA', 'SH24 1AA'];
 
 export function PostcodeChecker() {
 
-    const handleSubmit= async (event) => {
+    const [postcodeResultMessage, setPostcodeResultMessage] = useState("");
+
+    const handleSubmit = async (event) => {
         event.preventDefault();
 
-          const submittedPostcode = event.target.postcode.value;
+        const submittedPostcode = event.target.postcode.value;
 
-          const postcodeCheckerURL = `http://postcodes.io/postcodes/${submittedPostcode}`;
-
-          const response = await fetch(postcodeCheckerURL, {method: 'GET'}).then((response) => {
-  if (response.status === 200) {
-    return response.json();
-  }
-  throw new Error('Something went wrong');
-})
-.then((responseJson) => {
-  // Do something with the response
-})
-.catch((error) => {
-  console.log(error)
-});
-;
+        if (exceptionPostcodes.includes(submittedPostcode)) {
+            setPostcodeResultMessage("This postcode is within the area we serve!");
+        } else {
+            const postcodeCheckerURL = `http://postcodes.io/postcodes/${submittedPostcode}`;
+            
+            fetch(postcodeCheckerURL, {method: 'GET'}).then((response) => {
+                if (response.status === 200) {
+                    const parsedResponse = response.json();
+                    parsedResponse.then((response) => {
+                        const lsoa = response.result.lsoa;
+                        const LSOAPrefix = lsoa.split(" ")[0];
+                        const isAllowedPostcode = allowedLSOAPrefix.includes(LSOAPrefix);
+                        setPostcodeResultMessage( isAllowedPostcode ? "This postcode is within the area we serve!" : "Sorry, but we do not serve this postcode")
+                    });
+                } else throw new Error('Not a valid postcode');
+            }).catch((error) => {
+                console.log(error)
+                setPostcodeResultMessage("Please enter a valid postcode");
+            });
+        }
     }
-
 
     return (
         <div>
@@ -34,6 +43,7 @@ export function PostcodeChecker() {
                 <input type="text" id="postcode" name="postcode" />
                 <button type="submit">Enter</button>
             </form>
+            <p>{postcodeResultMessage}</p>
         </div>
     )
 }
