@@ -25,6 +25,6 @@ Tests are written with React Testing Library and Jest
 They can be run using 
 
 ```bash
-npm run dev 
+npm run test
 ```
 
